@@ -32,6 +32,11 @@ import numpy as np
 import pandas as pd
 
 define("port", default=8002, help="run on given port", type = int)
+settings = {
+'debug':True,
+'autoreload':True
+}
+
 
 #dn.set_gpu(0)
 net = dn.load_net("core/e.cf", "core/e.w", 0)
@@ -192,18 +197,25 @@ class hiveHandler(tornado.web.RequestHandler):
         else:
             return "data error"
 
+class imgBankHandler(tornado.web.StaticFileHandler):
+    def set_extra_headers(self, path):
+        self.set_header("Cache-control", "no-cache")
+        
 class HttpServerWrapper(object):
     def __init__(self, port):
         self.port = port
         self.handlers = []
-    
+
+
+
     def register(self):
         self.handlers.append((r'/analytics',hiveHandler))
+        self.handlers.append((r'/tuku/(.*)',imgBankHandler, {"path":"tuku"}))
     
     def run(self):
         print "server start...!"
         tornado.options.parse_command_line()
-        app = tornado.web.Application(handlers=self.handlers)
+        app = tornado.web.Application(handlers=self.handlers, **settings)
         http_server = tornado.httpserver.HTTPServer(app)
         http_server.listen(self.port)
         tornado.ioloop.IOLoop.instance().start()
