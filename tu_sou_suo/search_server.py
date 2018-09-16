@@ -16,7 +16,7 @@ import subprocess
 import time
 import os
 import sys
-
+from os import path
 #import traceback
 
 from tornado.options import define,options
@@ -56,11 +56,16 @@ def diff_file_name(filename):
         return filename
 
 def calc_dist_func(ff1, ff2):
+    #print type(ff1)
+    #print type(ff2)
+
     f1 = ff1
 
     ff2 = ff2.split("[")[1].split("]")[0].split(",")
     f2 = [float(s) for s in ff2]
 
+    #print type(f2)
+    #print "***************"
     cos_dist = np.dot(f1, f2) / (np.linalg.norm(f1) * np.linalg.norm(f2))
     return round(cos_dist, 3)
 
@@ -69,19 +74,22 @@ features_df = pd.read_csv("core/i_f.csv", header=0, sep=',')
 #print features_df.describe()
 def search_bank(in_feature):
     print "start search"
-    #print in_feature[0:100]
+    print in_feature[0:100]
+    
+    print features_df["img_name"].tail(3)
+    print len(features_df)
+
     dist_df = pd.DataFrame(columns=["img_name","distance"])
     global features_df
     dist_df["img_name"] = features_df["img_name"]
 
-#    print features_df["feature"][0][0:100]
-#    print features_df["feature"][1][0:100]
-    #global calc_dist
+    print features_df["feature"][0][0:100]
+    print features_df["feature"][1][0:100]
     global calc_dist_func
     calc_dist = lambda x: calc_dist_func(in_feature, x)
     dist_df["distance"] = features_df["feature"].apply(calc_dist)
 
-    #print dist_df.describe()
+    print dist_df.describe()
     dist_df.sort_values(by="distance", ascending=False, inplace=True)
 
     ret=""
@@ -142,10 +150,16 @@ class hiveHandler(tornado.web.RequestHandler):
             
             global fname
             now = time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time())) 
+            d = path.dirname(__file__)
+            d_abspath = path.abspath(d) 
+            d_parent_path = os.path.dirname(d_abspath)
+            #print d
+            #print d_abspath
+            #print d_parent_path
             if bReg_img == 1:
-                fname = diff_file_name("/home/proj_img_search/tu_sou_suo/tuku/"+now+r"_0.jpg")
+                fname = diff_file_name(d_abspath + "/tuku/"+now+r"_0.jpg")
             else:
-                fname = diff_file_name("/home/proj_img_search/img_s/"+now+r".jpg")
+                fname = diff_file_name(d_parent_path + "/img_s/"+now+r".jpg")
             print fname
             rcv_img = open(fname,'wb')
             rcv_img.write(dec_data)
@@ -186,7 +200,7 @@ class hiveHandler(tornado.web.RequestHandler):
                 global features_df
                 #print features_df["img_name"].tail(3)
                 #print len(features_df)
-                features_df.loc[len(features_df)] = (reg_name, feature)
+                features_df.loc[len(features_df)] = (reg_name, str(feature))
                 #print features_df["img_name"].tail(3)
                 #print len(features_df)
                 dn.append_feature_to_bank(reg_name, feature)
