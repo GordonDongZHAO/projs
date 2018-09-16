@@ -178,6 +178,12 @@ class hiveHandler(tornado.web.RequestHandler):
                 print "start to register image..."
                 reg_name = fname.split("/")[-1]
                 print reg_name
+                global features_df
+                #print features_df["img_name"].tail(3)
+                #print len(features_df)
+                features_df.loc[len(features_df)] = (reg_name, feature)
+                #print features_df["img_name"].tail(3)
+                #print len(features_df)
                 dn.append_feature_to_bank(reg_name, feature)
                 return "image %s registration OK!" %(reg_name)
             else:
